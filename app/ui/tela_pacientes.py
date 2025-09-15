@@ -91,3 +91,54 @@ class TelaPacientes(ttk.Frame):
     def _limpar(self): #limpa os campos de entrada do formulário
         for ent in (self.ent_nome, self.ent_cpf, self.ent_nasc, self.ent_tel):
             ent.delete(0,tk.END)
+
+
+    def _salvar(self):
+            # valida campos mínimos
+            nome = self.ent_nome.get().strip()
+            cpf  = self.ent_cpf.get().strip()
+            if not nome or not cpf:
+                messagebox.showwarning('Aviso', 'Nome e CPF são obrigatórios.')
+                return
+            p = Paciente(
+                id=self.sel_id,
+                nome=nome,
+                cpf=cpf,
+                data_nascimento=(self.ent_nasc.get().strip() or None),
+                telefone=(self.ent_tel.get().strip() or None)
+            )
+            try:
+                if p.id is None:
+                    self.sel_id = self.repo.create(p)
+                else:
+                    self.repo.update(p)
+                self._load()
+            except Exception as e:
+                messagebox.showerror('Erro', str(e))
+
+
+    def _excluir(self):
+            if self.sel_id is None:
+                return
+            # regra simples: alerta caso haja consultas futuras
+            if self.consulta_repo.has_future_for_paciente(self.sel_id):
+                messagebox.showwarning('Aviso', 'Paciente possui consultas futuras. Exclusão não recomendada.')
+                return
+            if messagebox.askyesno('Confirmar', 'Deseja excluir este paciente?'):
+                try:
+                    self.repo.delete(self.sel_id)
+                    self.sel_id = None
+                    self._limpar(); self._load()
+                except Exception as e:
+                    messagebox.showerror('Erro', str(e))
+
+
+    def _buscar(self):
+            nome = self.ent_nome.get().strip() or None
+            cpf  = self.ent_cpf.get().strip() or None
+            items = self.repo.find(nome=nome, cpf=cpf)
+            if not items:
+                messagebox.showinfo('Info', 'Nenhum paciente encontrado.')
+            self._load(items)
+
+        
