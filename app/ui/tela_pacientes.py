@@ -42,7 +42,7 @@ class TelaPacientes(ttk.Frame):
         btns = ttk.Frame(self) ; btns.pack(pady=4)
         ttk.Button(btns,text="Novo", command=self._novo).grid(row=0, column=0,padx=4)
         ttk.Button(btns,text="Salvar", command=self._salvar).grid(row=0, column=1,padx=4)
-        ttk.Button(btns,text="Excluir", command=self._exclur).grid(row=0, column=2,padx=4)
+        ttk.Button(btns,text="Excluir", command=self._excluir).grid(row=0, column=2,padx=4)
         ttk.Button(btns,text="Buscar", command=self._buscar).grid(row=0, column=3,padx=4)
         ttk.Button(btns,text="Limpar", command=self._limpar).grid(row=0, column=4,padx=4)
 
@@ -54,7 +54,7 @@ class TelaPacientes(ttk.Frame):
             ('NASC','Nascimento',120),('TEL','Telefone',120)
         ):
             self.tree.heading(col,text=text) #montando o cabeçalho
-            self.tree.column(col,width,anchor="w") #definindo a largura das col
+            self.tree.column(col,width=width,anchor="w") #definindo a largura das col
 
         self.tree.pack(fill="both",expand=True,padx=8,pady=6)
         #pega a ação de clique na lista da tabela
@@ -91,7 +91,6 @@ class TelaPacientes(ttk.Frame):
     def _limpar(self): #limpa os campos de entrada do formulário
         for ent in (self.ent_nome, self.ent_cpf, self.ent_nasc, self.ent_tel):
             ent.delete(0,tk.END)
-
 
     def _salvar(self):
             # valida campos mínimos
