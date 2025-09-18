@@ -3,8 +3,8 @@ from typing import List,Optional
 # List[Medico] -> Indica que a função retorna uma lista contendo objetos do tipo Medico
 # Optional[Medico] -> Indica que a função pode retornar um ojeto Medico 
 #                                           ou None(quando não encontrar nada
-from database.connection import get_connection # Função que conecta com o banco
-from models.medico import Medico #Classe que representa um Medico
+from app.database.connection import get_connection # Função que conecta com o banco
+from app.models.medico import Medico #Classe que representa um Medico
 
 class MedicoRepository: 
     #Classe reponsável por acessar e manipular dados da tabela Medico
