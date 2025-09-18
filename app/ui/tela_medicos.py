@@ -45,11 +45,12 @@ class TelaMedicos(ttk.Frame):
 
         btns = ttk.Frame(self) ; btns.pack(pady=4)
 
-        ttk.Button(btns,text="Novo",command=self._novo).grid(row=0,column=0,padx=4)
+        ttk.Button(btns, text="Novo", command=self._novo).grid(row=0,column=0,padx=4)
         ttk.Button(btns,text="Salvar",command=self._salvar).grid(row=0, column=1, padx=4)
         ttk.Button(btns,text="Excluir",command=self._excluir).grid(row=0,column=2,padx=4)
         ttk.Button(btns,text="Buscar",command=self._buscar).grid(row=0, column=3, padx=4)
         ttk.Button(btns,text="Limpar",command=self._limpar).grid(row=0, column=4, padx=4)
+                
 
 
 
