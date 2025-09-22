@@ -18,7 +18,7 @@ container.pack(fill="both",expand=True)
 #Expande o container na Tela Principal
 
 # TROQUE AQUI A TELA DESEJADA
-TelaMedicos(container) #Mude para a TelaPacientes
+TelaPacientes(container) #Mude para a TelaPacientes
 
 root.mainloop()
 
