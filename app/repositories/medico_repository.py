@@ -51,7 +51,7 @@ class MedicoRepository:
         # Retorna SEMPRE uma lista, que pode estar vazia   
          conn = get_connection() # Abre a conexão
          try: # Base da query. "WHERE 1=1" facilita adicioanr condições depois
-             sql = "SELECT id,nome,crm,especialidade,horario_atendimento FROM medicos WHERE 1=1"
+             sql = "SELECT id,nome,crm,especialidade,horario_atendimento FROM medico WHERE 1=1"
              params = list = [] #Lista que armazena valores para os filtros (seguindo a ordem dos ?)
 
              if nome: # Se o filtro "nome" foi preenchida  
