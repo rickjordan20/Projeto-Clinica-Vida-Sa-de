@@ -87,6 +87,7 @@ class TelaMedicos(ttk.Frame):
     def _load(self, items=None):
         for i in self.tree.get_children(): #Pega o WIDGET da TABELA TREE(FILHO)
             self.tree.delete(i) #Deleta todos WIDGETS da TABELA TREE
+            
         items = items or self.medico_repo.find() 
             #recebe um valor do parametro "items" ou 
             # chama a função find da classe medico_repo
