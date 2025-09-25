@@ -4,6 +4,7 @@ from tkinter import ttk # Widgets com estilo moderno e nativo
 #Importa as telas que você quer testar
 from app.ui.tela_pacientes import TelaPacientes
 from app.ui.tela_medicos import TelaMedicos
+from app.ui.tela_consultas import TelaConsultas
 #from app.ui.tela_consultas import TelaConsultas
 
 root = tk.Tk() # Cria um Frame(Janela)
@@ -18,7 +19,7 @@ container.pack(fill="both",expand=True)
 #Expande o container na Tela Principal
 
 # TROQUE AQUI A TELA DESEJADA
-TelaMedicos(container) #Mude para a TelaPacientes
+TelaConsultas(container) #Mude para a TelaPacientes
 
 root.mainloop()
 

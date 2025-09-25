@@ -98,15 +98,24 @@ class ConsultaRepository:
     def exists_at(self, medico_id : int, data: str, 
                   hora: str, id_ : int | None = None) -> bool:
         conn = get_connection()
-
-
-
-
-           
-        
-
-
-            
+        try:
+            #sql - é o nosso codigo BASE(padrão)
+            sql = """ 
+                SELECT COUNT(1) FROM consulta
+                WHERE medico_id=?
+                AND date(data) = date(?)
+                AND hora = ?
+                AND status = "Agendada"
+                 """
+            #params - é o complemento do codigo sql base
+            params = [medico_id,data,hora]
+            if id_:
+                sql += " AND id <> ?"
+                params.append(id_) #adiciona a variavel id_ no final da lista
+            cursor = conn.execute(sql,params) # guarda o resultado do sql
+            return cursor.fetchone()[0] > 0
+        finally:
+            conn.close()
 
 
     def has_future_for_paciente(self,paciente_id:int)->bool:
