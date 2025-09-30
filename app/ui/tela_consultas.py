@@ -4,6 +4,8 @@ from tkinter import ttk, messagebox, filedialog  #Importando dependências da Bl
 import csv #Importando a Biblioteca CSV para trabalhar com planilhas
 
 from app.models.consulta import Consulta #Importando a Classe Consulta
+from app.models.medico import Medico
+from app.models.paciente import Paciente
 #Importando as conexões do CRUD com o Banco de Dados
 from app.repositories.consulta_repository import ConsultaRepository
 from app.repositories.medico_repository import MedicoRepository
@@ -21,6 +23,7 @@ class TelaConsultas(ttk.Frame):
         self.paciente_repo = PacienteRepository() #instanciando a Classe(criar um objeto)
         #self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
         self._build()
+        self._fill_combos()
         #self._load()
 
     def _build(self):
@@ -93,12 +96,82 @@ class TelaConsultas(ttk.Frame):
         # Vincula evento de seleção de linha
         self.tree.bind('<<TreeviewSelect>>', self._on_select)
 
-    def _on_select():
-        return 
+        #Cache / estado
+        self.map_pac = {} #Nome -> id Dicionário para mapear o nome do paciente para o id
+        self.map_med = {} #Nome -> id Dicionário para mapear o nome do médico para o id 
+        self.sel_id = None #Guardar o ID da consulta selecioanda
+        self.last_items = [] #Última lista exibida (para referência/export)
+        #Mantém a última lista mostrada
+ 
+
+    def _fill_combos(self):
+        pacs = self.paciente_repo.find() #Busca todos os pacientes do banco
+        meds = self.medico_repo.find() #Busca todos os médicos do banco
+        self.map_pac = {p.nome : p.id for p in pacs} #Cria um mapa id->nome para Pacientes
+        self.map_med = {m.nome : m.id for m in meds} #Cria um mapa id->nome para Médicos
+        self.cb_paciente['values'] = list(self.map_pac.keys()) 
+            #Preenche o combo de paciente com os nomes
+        self.cb_medico['values'] = list(self.map_med.keys()) 
+            #Cria um mapa id->nome para Médicos
+
+    def _load(self, items = None):
+        
+        self._fill_combos() #Garante os combos sejam atualizados
+        if items is None:
+            items = self.consulta_repo.find() #Se não veio lista, carrega todas as consultas
+        self._last_items = items #carrega o que está na tela e Salva a lista exibida atualmente
+
+        #Limpa e popula a tabela
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        
+      
+        #Remove todas as linhas atuais da tabela
+        pac_cache = {p.id : p.nome for p in self.paciente_repo.find()}
+        #Cache id -> nome de pacientes para exibição
+        med_cache = {m.id : m.nome for m in self.medico_repo.find()}
+        #Cache id -> nome de medicos para exibição
+        for c in items:
+            self.tree.insert('','end',values=(
+                #Inserir uma linha por consulta
+                c.id, #Id da Consulta
+                pac_cache.get(c.paciente_id,c.paciente_id), # Mostra o nome do paciente (ou id se faltar)
+                med_cache.get(c.medico_id,c.medico_id), # Mostra o nome do  medico (ou is se faltar)
+                c.data,c.hora,c.status
+            ))
+        
+
+
+    def _on_select(self, _):
+        sel = self.tree.selection() # Obtem a seleção atual da tabela
+        if not sel: #Se nada for selecionado, sai
+            return 
+        self.sel_id = int(self.tree.item(sel[0],'values')[0])
+            #Salva o ID da consulta selecionada
+        
     
     def _agendar(self):
-
-        return
+        nome_p = self.cb_paciente.get().strip() 
+            #Lê o paciente selecionado
+        nome_m = self.cb_medico.get().strip()
+            #Lê o médico selecioando
+        data = self.ent_data.get().strip()
+            #Lê a data informada
+        hora = self.ent_hora.get().strip()
+            #Lê a hora informada
+        
+        if not nome_p or not nome_m or not data or not hora:
+            messagebox.showwarning("AVISO","Preencha todos os campos corretamente!")
+            return
+        
+        pid = self.map_pac.get(nome_p) #Converte o nome do paciente para id
+        mid = self.map_med.get(nome_m) #Converte o nome do médico para id
+        
+        if pid is None or mid is None:
+            messagebox.showerror("ERRO","Seleção de Paciente/Médico inválida!")
+            #Falha se o mapeamento não existir 
+            
+        
         
     def _remarcar(self):
 
