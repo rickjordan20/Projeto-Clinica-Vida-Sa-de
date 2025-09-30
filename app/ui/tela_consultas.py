@@ -12,7 +12,7 @@ from app.repositories.medico_repository import MedicoRepository
 from app.repositories.paciente_repository import PacienteRepository
 
 #Importando o o "serviço de agendamento" que contem as regras de negócio
-#from app.services.agendamento_service import AgendamentoService, AgendamentoError
+from app.services.agendamento_service import AgendamentoService, AgendamentoError
 
 #Criação da Tela de Consultas
 class TelaConsultas(ttk.Frame):
@@ -21,10 +21,10 @@ class TelaConsultas(ttk.Frame):
         self.consulta_repo = ConsultaRepository() #instanciando a Classe(criar um objeto)
         self.medico_repo = MedicoRepository() #instanciando a Classe(criar um objeto)
         self.paciente_repo = PacienteRepository() #instanciando a Classe(criar um objeto)
-        #self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
+        self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
         self._build()
         self._fill_combos()
-        #self._load()
+        self._load()
 
     def _build(self):
         self.pack(fill='both',expand=True) #RESPOSIVIDADE - adpta ao tamanho da tela
@@ -170,13 +170,43 @@ class TelaConsultas(ttk.Frame):
         if pid is None or mid is None:
             messagebox.showerror("ERRO","Seleção de Paciente/Médico inválida!")
             #Falha se o mapeamento não existir 
+            return
+        c = Consulta(id=None,paciente_id=pid,medico_id=mid,
+                     data=data,hora=hora,status="Agendada") #Montar o OBJETO CONSULTA
+        try:
+            self.sel_id = self.svc.agendar(c)
+            #Usa o SERVICE para aplicar regras e criar a consulta
+            self._load()
+        except AgendamentoError as e:
+            messagebox.showwarning("Aviso",str(e)) # Exibe avisos de regra de negócio
+        except Exception as e:
+            messagebox.showerror("Erro",str(e)) #Erros inesperados
+
             
-        
+
         
     def _remarcar(self):
-
-        return
+        if self.sel_id is None:
+            messagebox.showinfo("Info","Selecione uma consulta na tabela!")
+                #Exige uma seleção
+            return
+        c = self.consulta_repo.get_by_id(self.sel_id)
+            #Busca a consulta pelo ID
+        if not c:
+            messagebox.showerror("Erro","Consulta não encontrada!")
+            #Se não achar, informa o erro
+            return
+        data = self.ent_data.get().strip() #Nova data digitada
+        hora = self.ent_hora.get().strip() #Nova hora digitada
+        if not data or not hora:
+            messagebox.showwarning("Aviso","Informe nova Data e Hora.")
+            #Validação básica
+            return
+        #Atualiza os objetos com novos valores
+        c.data=data
+        c.hora=hora
         
+
     def _cancelar(self):
         
         return 
