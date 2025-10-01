@@ -12,7 +12,7 @@ from app.repositories.medico_repository import MedicoRepository
 from app.repositories.paciente_repository import PacienteRepository
 
 #Importando o o "serviço de agendamento" que contem as regras de negócio
-from app.services.agendamento_service import AgendamentoService, AgendamentoError
+#from app.services.agendamento_service import AgendamentoService, AgendamentoError
 
 #Criação da Tela de Consultas
 class TelaConsultas(ttk.Frame):
@@ -21,7 +21,7 @@ class TelaConsultas(ttk.Frame):
         self.consulta_repo = ConsultaRepository() #instanciando a Classe(criar um objeto)
         self.medico_repo = MedicoRepository() #instanciando a Classe(criar um objeto)
         self.paciente_repo = PacienteRepository() #instanciando a Classe(criar um objeto)
-        self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
+        #self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
         self._build()
         self._fill_combos()
         self._load()
@@ -205,18 +205,70 @@ class TelaConsultas(ttk.Frame):
         #Atualiza os objetos com novos valores
         c.data=data
         c.hora=hora
-        
+        try:
+            self.svc.remarcar(c) #Regras de negócio para remarcação
+            self._load() #Recarrega a listagem
+        except AgendamentoError as e:
+            messagebox.showwarning("Aviso",str(e)) 
+            #Mensagem de regrada negada
+        except Exception as e:
+            messagebox.showerror("Erro",str(e)) #Erro inesperado
 
     def _cancelar(self):
-        
-        return 
-        
+        if self.sel_id is None: #Sem seleção, não faz nada
+            return
+        try:
+            self.svc.cancelar(self.sel_id)
+            #Pede ao service para cancelar (muda status)
+            self._load() #Atualiza a lista
+        except AgendamentoError as e:
+            messagebox.showwarning("Aviso",str(e))
+        except Exception as e:
+            messagebox.showerror("Erro",str(e)) #Erro inesperado
+     
     def _concluir(self):
+        if self.sel_id is None: # Sem seleção, não faz nada
+            return 
+        try:
+            self.svc.concluir(self.sel_id)
+            #Marca como "Realizada" via service
+            self._load()
+
+        except AgendamentoError as e:
+            messagebox.showwarning("Aviso",str(e))
         
-        return 
-        
+        except Exception as e: #retorna erro do python
+            messagebox.showerror("Erro",str(e)) #erro enesperado
+
     def _filtrar(self):
-        
+        #lê filtros
+        nome_pac = self.cb_paciente.get().strip() or None
+        #Paciente filtrado (ou None)
+        nome_med = self.cb_medico.get().strip() or None
+        #Médico filtrado (ou None)
+        data_de = self.ent_de.get().strip() or None
+        datas_ate = self.ent_ate.get().strip() or None
+        hora = self.ent_hora.get().strip() or None
+        status = self.cb_status.get().strip()
+        #Status selecionado
+        if status == "Todas":
+            status = None
+            #"Todas" significa não filtrar por status
+        pid = self.map_pac.get(nome_pac) if nome_pac else None
+        mid = self.map_med.get(nome_med) if nome_med else None
+            #Converte o nome do médico para ID
+        items = self.consulta_repo.find(
+            paciente_id=pid,
+            medico_id=mid,
+            status=status,
+            data_de=data_de,
+            data_ate=datas_ate
+        )
+        if not items:
+            messagebox.showinfo("Info", "Nenhuma consulta " \
+            "                     encontrada para os filtros") #Feedback quando vazio
+            self._load(items)
+
         return
         
     def _exportar(self):
