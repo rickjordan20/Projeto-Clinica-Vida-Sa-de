@@ -12,7 +12,7 @@ from app.repositories.medico_repository import MedicoRepository
 from app.repositories.paciente_repository import PacienteRepository
 
 #Importando o o "serviço de agendamento" que contem as regras de negócio
-#from app.services.agendamento_service import AgendamentoService, AgendamentoError
+from app.services.agendamento_service import AgendamentoService, AgendamentoError
 
 #Criação da Tela de Consultas
 class TelaConsultas(ttk.Frame):
@@ -21,7 +21,7 @@ class TelaConsultas(ttk.Frame):
         self.consulta_repo = ConsultaRepository() #instanciando a Classe(criar um objeto)
         self.medico_repo = MedicoRepository() #instanciando a Classe(criar um objeto)
         self.paciente_repo = PacienteRepository() #instanciando a Classe(criar um objeto)
-        #self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
+        self.svc = AgendamentoService(self.consulta_repo, self.medico_repo)
         self._build()
         self._fill_combos()
         self._load()
@@ -290,15 +290,25 @@ class TelaConsultas(ttk.Frame):
         #Cache de nomes dos médicos
 
         try:
-            with open(path,'w',newline='',encoding='utf-8'):
-                return 
-        
-        except Exception as e:
-            messagebox.showerror("Erro",str(e))
-        
-
-
-        return
+            with open(path,'w',newline='',encoding='utf-8') as f:
+                #Abre CSV para escrita
+                w = csv.writer(f) 
+                w.writerow(['id','paciente','medico','data','hora','status'])
+                #Montando o cabeçalho do CSV
+                for c in items:
+                    w.writerow([
+                        #Cada linha com valores legíveis
+                        c.id,
+                        pac_cache.get(c.paciente_id,c.paciente_id),
+                        med_cache.get(c.medico_id,c.medico_id),
+                        c.data,
+                        c.hora,
+                        c.status
+                    ])
+                messagebox.showinfo("Sucesso","CSV exportado com sucesso!") 
+        #Confirmação ao usuário
+        except Exception as e: #Erro se algo falhar
+            messagebox.showerror("Erro",str(e))  #Mostra a mensagem de erro
 
         
     
