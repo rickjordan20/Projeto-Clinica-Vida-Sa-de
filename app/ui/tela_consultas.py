@@ -272,7 +272,32 @@ class TelaConsultas(ttk.Frame):
         return
         
     def _exportar(self):
+        #Exportar as consultas "Realizadas(histórico)", independete dos filtros atuais
+        path = filedialog.asksaveasfilename( 
+            # Abrir uma caixa de dialogo para escolher aonde salvar
+            title="Salvar CSV",
+            defaultextension="csv",
+            filetypes=[("CSV","*.csv")]
+        )
+        if not path: #se o usuário cancelou, sai da função
+            return
+        items = self.consulta_repo.find(status="Realizadas") 
+            #Busca somente consultas realizadas
         
+        pac_cache = {p.id:p.nome for p in self.paciente_repo}
+        #Cache de nomes de paciente
+        med_cache = {m.id:m.nome for m in self.medico_repo}
+        #Cache de nomes dos médicos
+
+        try:
+            with open(path,'w',newline='',encoding='utf-8'):
+                return 
+        
+        except Exception as e:
+            messagebox.showerror("Erro",str(e))
+        
+
+
         return
 
         
