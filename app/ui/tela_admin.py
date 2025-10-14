@@ -6,7 +6,7 @@ from tkinter import ttk,messagebox,filedialog
 
 import sqlite3 #Para captura erros de integridade 
 
-from repositories.usuario_repository import UsuarioRepository
+from app.repositories.usuario_repository import UsuarioRepository
 
 #from models.usuario import Usuario
 
@@ -53,7 +53,7 @@ class TelaAdmin(ttk.Frame):
         
         #Monta o conteúdo interno de caba aba
         self._build_user_tab()
-        self._build_backup_tab()
+        #self._build_backup_tab()
 
     def _build_user_tab(self):
         #Grupo de formulário de cadastro-edição
