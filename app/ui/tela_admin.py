@@ -80,6 +80,66 @@ class TelaAdmin(ttk.Frame):
         ttk.Label(form,text="deixe em branco para manter a senha atual ao editar"
                   ).grid(row=2, column=2,sticky='w',padx=4, pady=4)
             #dica para edição
+        
+        #Campo: Perfil (combox somente leitura)
+        ttk.Label(form, text="Perfil: ").grid(
+                row=3,column=0,padx=4,pady=4)
+        #Lista de perfil
+        self.cb_perfil = ttk.Combobox(form,values=PERFIS,state='readonly',width=22)
+        self.cb_perfil.grid(row=3,column=1,sticky='w',padx=4,pady=4)
+
+        # Barra de botões de ações (CRUD + Utilitários)
+        btns = ttk.Frame(self); btns.pack(pady=4)
+        
+        ttk.Button(btns, text='Salvar',command=self._salvar).grid(row=0,column=0, padx=4)
+        ttk.Button(btns, text='Exluir',command=self._excluir).grid(row=0,column=1, padx=4)
+        ttk.Button(btns, text='Buscar',command=self._buscar).grid(row=0, column=2, padx=4)
+        ttk.Button(btns, text='Limpar',command=self._limpar).grid(row=0, column=3, padx=4)
+
+        #Linha de busca rápida por nome
+        quick = ttk.Frame(self.tab_user)
+        quick.pack(fill='x',padx=7,pady=(0,4))
+
+        ttk.Label(quick,text="Filtro por Nome: ").pack(side='left',padx=(0,6)) #rotúlo de filtro
+        self.ent_busca = ttk.Entry(quick,width=30) #campo de filtro
+        self.ent_busca.pack(padx=4, side='left')
+
+        #tk.Button(quick,text="Aplicar", command=self._buscar()).pack(side='left',padx=6)  #aplica o filtro
+
+        # Tabela (TreeView) de usuários
+        self.tree_users = ttk.Treeview(self.tab_user,
+                                       columns=('id','nome','login','perfil'), #define as colunas de dados
+                                       show='headings', #mostrar cabeçalho
+                                       height=12 #altura em linhas visiveis
+        )
+
+        #Configurar Cabeçalhos e largura da coluna
+        for col, txt, wid in (
+                                ('id','ID',50), 
+                                ('nome','NOME',200),
+                                ('login','LOGIN',180),
+                                ('pefil','PERFIL',100)
+                            ):
+                self.tree_users.heading(col,text=txt) #texto do cabeçalho
+                self.tree_users.column(col,width=wid, anchor='w') #Largura e alinhamento a esquerda
+        
+        self.tree_users.pack(fill='both',expand=True) #expande a tabela
+                                                                            
+    
+    def _salvar():
+        return
+    
+    def _excluir():
+        return
+    
+    def _buscar():
+        return
+    
+    def _limpar():
+        return
+
+
+
 
 
 

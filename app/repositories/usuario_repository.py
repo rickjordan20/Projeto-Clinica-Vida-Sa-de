@@ -1,5 +1,5 @@
-from models.usuario import Usuario #importa a classe
-from database.connection import get_connection
+from app.models.usuario import Usuario #importa a classe
+from app.database.connection import get_connection
 from typing import Optional, List #trabalhar com classes e objetos
 
 class UsuarioRepository:
