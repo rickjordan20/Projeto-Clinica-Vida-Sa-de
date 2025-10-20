@@ -7,8 +7,7 @@ from tkinter import ttk,messagebox,filedialog
 import sqlite3 #Para captura erros de integridade 
 
 from app.repositories.usuario_repository import UsuarioRepository
-
-#from models.usuario import Usuario
+from app.models.usuario import Usuario
 
 # Constantes com as opções de perfil disponíveis
 # para o combobox
@@ -124,19 +123,105 @@ class TelaAdmin(ttk.Frame):
                 self.tree_users.column(col,width=wid, anchor='w') #Largura e alinhamento a esquerda
         
         self.tree_users.pack(fill='both',expand=True) #expande a tabela
-                                                                            
+
+        #Vincula o evento de seleção de linha a rotina que preenche 
+        # o formulário com os dados selecionados
+        self.tree_users.bind('<<TreeviewSelect>>',self._user_on_select)
+
+    def _user_load(self, items = None):
+        """ Carrega/recarrega a tabela com os usuários fornecidos (ou todos, se None)"""
+        #Limpar todos os itens atuais de TreeView(tabela)
+        for i in self.tree_users.get_children():
+            self.tree_users.delete(i)
+
+        # Se não recebeu uma linha filtrada, busca todos no repositório
+        items = items or self.repo_user.find()
+
+        #Insere cada usuário com uma linha na TreeView
+        for u in items:
+            self.tree_users.insert('','end',
+                                   values=(u.id,u.nome,u.login, u.perfil))
     
-    def _salvar():
+    def _user_on_select(self,_):
+        ''' Handler disparado ao selecionar uma linha na tabela:
+            preenche o formulário'''
+        
+        sel = self.tree_users.selection() 
+            # Obtem os itens selecionados
+        if not sel:
+            return #Nada selecionado > sai 
+        
+        vals = self.tree_users.item(sel[0],'values') 
+            #Recupera a teuplade valores da linha
+        self.sel_user_id = int(vals[0]) 
+            #Guarda o ID selecionado para operações futuras
+        
+
+        u = self.repo_user.get_by_id(self.sel_user_id)
+            #Busca o u suário completo pelo ID (do banco
+
+        if not u:
+            return
+        
+        #Preenche o formulário (não exibe a senha por segurança)
+        self.ent_nome.delete(0,tk.END); self.ent_nome.insert(0,u.nome)
+        self.ent_login.delete(0,tk.END); self.ent_login.insert(0,u.login)
+        self.ent_senha.delete(0,tk.END)
+
+        self.cb_perfil.set(u.perfil or "Recepcionista")
+            #Defgine o perfil atual (ou padrão)
+
+    def _user_novo(self):
+        #Prepara o formulário para inserir um usuário novo
+        self.sel_user_id = None # None indica o modo de criação (create)
+        self._user_limpar () #Limpa os campos e filtro
+    
+    def _user_limpar(self):
+        # Limpa os campos do fomrulário e o campo de busca
+        for ent in (self.ent_nome,self.ent_login, self.ent_senha):
+            ent.delete(0,tk.END) #Limpa cada campo Entry
+        
+        self.cb_perfil.set("Recepcionista") 
+            # Restaurar o valor padrão do perfil
+        self.ent_busca.delete(0,tk.END) #Limpa o filtro de busca
+    
+    def _user_salvar(self):
+        """Insere (CREATE) ou atualiza(UPDATE)
+          um usuário, conforme o estado atual"""
+        nome = self.ent_nome.get().strip()
+        login = self.ent_login.get().strip()
+        senha = self.ent_senha.get().strip()
+        perfil = self.cb_perfil.get().strip() or "Recepcionista"
+
+        if not nome or not login:
+            messagebox.showwarning("Aviso", "Nome e Login são obrigatórios!")
+            return
+        
+        try:
+            if self.sel_user_id is None:
+                #Modo INSERT(novo registro): exige senha informada
+                if not senha:
+                    messagebox.showwarning("Aviso",
+                                              "Informe uma senha para o usuário")
+                    return
+                #Monta o modelo de dominio(usuário)
+                u = Usuario(
+                    id = self.sel_user_id,
+                    nome=nome,
+                    login=login,
+                    senha=senha,
+                    perfil=perfil
+                )
+                self.repo_user.update(u)
+        finally:
+            return 
+    
+    def _user_excluir(self):
         return
     
-    def _excluir():
+    def _user_buscar(self):
         return
     
-    def _buscar():
-        return
-    
-    def _limpar():
-        return
 
 
 
