@@ -6,7 +6,7 @@ from tkinter import ttk,messagebox,filedialog
 
 import sqlite3 #Para captura erros de integridade 
 
-from app.repositories.usuario_repository import UsuarioRepository
+from app.respositories.usuario_repository import UsuarioRepository
 from app.models.usuario import Usuario
 
 # Constantes com as opções de perfil disponíveis
@@ -213,8 +213,7 @@ class TelaAdmin(ttk.Frame):
                     perfil=perfil
                 )
                 self.repo_user.update(u)
-        finally:
-            return 
+        
     
     def _user_excluir(self):
         return
