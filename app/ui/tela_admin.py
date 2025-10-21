@@ -6,7 +6,8 @@ from tkinter import ttk,messagebox,filedialog
 
 import sqlite3 #Para captura erros de integridade 
 
-from app.respositories.usuario_repository import UsuarioRepository
+from app.repositories.usuario_repository import UsuarioRepository
+from app.services.backup_service import BackupService
 from app.models.usuario import Usuario
 
 # Constantes com as opções de perfil disponíveis
@@ -23,11 +24,11 @@ class TelaAdmin(ttk.Frame):
     #   com o container pai(master)
         self.repo_user = UsuarioRepository()
         #Instância o repositório para operações de usuários(CRUD)
-        #self.bkp = importar depois de criar bacup_service
+        self.bkp = BackupService()
         self.sel_user_id = None
-        #Guarda o ID do usuário seleciuonado na tabela (None=nenhum)
+        #Guarda o ID do usuário selecionado na tabela (None=nenhum)
         self._build() # Monta toda a iterface(abas, forms, botões,etc.)
-        #self._user_load() # Carrega os usuários do banco e preenche o TreeView
+        self._user_load() # Carrega os usuários do banco e preenche o TreeView
 
     def _build(self):
         self.pack(fill='both', expand=True) 
@@ -90,10 +91,10 @@ class TelaAdmin(ttk.Frame):
         # Barra de botões de ações (CRUD + Utilitários)
         btns = ttk.Frame(self); btns.pack(pady=4)
         
-        ttk.Button(btns, text='Salvar',command=self._salvar).grid(row=0,column=0, padx=4)
-        ttk.Button(btns, text='Exluir',command=self._excluir).grid(row=0,column=1, padx=4)
-        ttk.Button(btns, text='Buscar',command=self._buscar).grid(row=0, column=2, padx=4)
-        ttk.Button(btns, text='Limpar',command=self._limpar).grid(row=0, column=3, padx=4)
+        ttk.Button(btns, text='Salvar',command=self._user_salvar).grid(row=0,column=0, padx=4)
+        ttk.Button(btns, text='Exluir',command=self._user_excluir).grid(row=0,column=1, padx=4)
+        ttk.Button(btns, text='Buscar',command=self._user_buscar).grid(row=0, column=2, padx=4)
+        ttk.Button(btns, text='Limpar',command=self._user_limpar).grid(row=0, column=3, padx=4)
 
         #Linha de busca rápida por nome
         quick = ttk.Frame(self.tab_user)
@@ -117,7 +118,7 @@ class TelaAdmin(ttk.Frame):
                                 ('id','ID',50), 
                                 ('nome','NOME',200),
                                 ('login','LOGIN',180),
-                                ('pefil','PERFIL',100)
+                                ('perfil','PERFIL',100)
                             ):
                 self.tree_users.heading(col,text=txt) #texto do cabeçalho
                 self.tree_users.column(col,width=wid, anchor='w') #Largura e alinhamento a esquerda
@@ -213,13 +214,118 @@ class TelaAdmin(ttk.Frame):
                     perfil=perfil
                 )
                 self.repo_user.update(u)
+            else:
+                #Modo UPDATE: se a senha não for informada, mantem a senha atual do banco
+                atual = self.repo_user.get_by_id(self.sel_user_id) # contem o usuário atual logado
+                if not atual:
+                    messagebox.showerror("Erro","Usuário não encontrado!")
+                    return
+                senha_final = senha if senha else atual.senha # Mantém a senha antiga do banco de dados
+                u = Usuario(
+                    id = self.sel_user_id,
+                    nome=nome,
+                    login=login,
+                    senha=senha,
+                    perfil=perfil
+                )
+                self.repo_user.update(u) # atualiza no banco
+
+                # Recarrega a tabela para refletir as alterações feitas
+                self._user_load()
+                messagebox.showinfo("Sucesso", "Usuário salvo com sucesso!")
         
-    
+        except sqlite3.IntegrityError:
+            # Erro de Integridade para garantir a conscistência dos dados
+            messagebox.showerror("Erro","Login já existente! Escolha outro.")
+
+        except Exception as e:
+            messagebox.showerror("Erro",str(e))
+
     def _user_excluir(self):
-        return
-    
+        #Exclui o usuário selecionado após confirmação
+        if self.sel_user_id is None:
+            return # Ninguém selecionado  - nada a fazer
+        # Confirmação de ação destruir
+        if not messagebox.askyesno("Confirmar","Deseja excluir este usuário?"):
+            return
+        try:
+            self.repo_user.delete(self.sel_user_id) # Remove do banco
+            self.sel_user_id = None #Limpa a seleção atual
+            self._user_limpar() #Limpa o formulário
+            self._user_load() #Recarrega a grade
+        except Exception as a:
+            messagebox.showerror("Erro",str(a))     #Exibe erros inesperados       
+
+        
     def _user_buscar(self):
-        return
+        # Filtra os usuários pelo nome e recarrega a tabela com o resultado
+        nome = self.ent_busca.get().strip() or None # None pode significar "sem filtro"
+        items = self.repo_user.find(nome=nome) # Busca filtrada no repositório
+        if not items:
+            messagebox.showinfo("Info", "Nenhum usuário encontrado!")
+        
+        self._user_load(items) #Recarrega a tabela com a listra (mesmo vazia)
+    
+    #-----------------------------Aba: Backup e Restore----------------------------
+    def _build_backup_tab(self):
+        #Monta a aba de backup e restauração de banco
+        wrap = ttk.Frame(self.tab_backup)
+        wrap.pack(fill='x',expand=True,padx=8,pady=8)
+        ttk.Label(wrap,text="Backup e Restauração do Banco",
+                  font=("Arial",14,"bold")).pack(pady=(0,8))
+        
+        #Botões de ação(backup e restore)
+        btns = ttk.Frame(wrap)
+        btns.pack(pady=8)
+        ttk.Button(btns,text="Gerar Backup",
+                   command=self._backup).grid(row=0,column=0, padx=6)
+        
+        ttk.Button(btns,text="Restaurar Backup",
+                   command=self._restore).grid(row=0,column=1, padx=6)
+        
+        """Aviso de boa prática: reinicializar o app após restore 
+        evita conexão com o Banco"""
+        ttk.Label(wrap, 
+                  text="Após restaurar, reinicie o sistema!",
+                 foreground='#555555' ).pack(pady=6)
+    
+    def _backup(self):
+        # Gera um arquivo de backup do banco atual e informa o caminho
+        try:
+            path = self.bkp.backup() #Caminho do backup
+            messagebox.showinfo("Sucesso",f"Backup criado em:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Erro",str(e))
+
+    def _restore(self):
+        """Restaura o banco a partir de um arquivo .db escolhido pelo usuário."""
+        # Abre seletor de arquivos, filtrando preferencialmente .db
+        file = filedialog.askopenfilename(
+            title='Selecione o arquivo de backup',
+            filetypes=[('DB','*.db'),('Todos','*.*')]
+        )
+        if not file:
+            return  # Usuário cancelou a seleção
+        # Confirmação antes de uma operação potencialmente destrutiva (sobrescrever o banco atual)
+        if not messagebox.askyesno("Confirmar", "Tem certeza que deseja restaurar este backup?"):
+            return
+        try:
+            self.bkp.restore(file)                                        # Delegado ao serviço de backup
+            messagebox.showinfo('Sucesso','Backup restaurado. Reinicie o sistema.')
+        except Exception as e:
+            messagebox.showerror('Erro', str(e))                          # Exibe qualquer falha no processo
+
+
+
+
+
+        
+        
+
+        
+
+
+
     
 
 
